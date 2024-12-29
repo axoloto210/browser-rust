@@ -10,3 +10,7 @@ https://github.com/hikalium/wasabi
 `export DISPLAY=0`
 
 https://github.com/d0iasm/sababook/issues/2
+
+### テスト用サーバーの起動
+`python3 -m http.server 8000`
+`test.html`を返すサーバーを起動。
