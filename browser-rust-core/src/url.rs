@@ -27,7 +27,7 @@ impl Url {
     //&mut self でオブジェクトのプロパティを変更可能に
     pub fn parse(&mut self) -> Result<Self, String> {
         if !self.is_http() {
-            return Err("Only http schema allowed.".to_string());
+            return Err("Only http scheme allowed.".to_string());
         }
 
         self.host = self.extract_host();
@@ -101,7 +101,11 @@ impl Url {
         }
 
         let path_and_searchpart: Vec<&str> = url_parts[1].splitn(2, "?").collect();
-        path_and_searchpart[1].to_string()
+        if path_and_searchpart.len() < 2 {
+            "".to_string()
+        } else {
+            path_and_searchpart[1].to_string()
+        }
     }
 
     pub fn host(&self) -> String {
@@ -119,21 +123,86 @@ impl Url {
     }
 }
 
-
 #[cfg(test)]
-mod tests{
-use super::*;
+mod tests {
+    use super::*;
 
     #[test]
-    fn test_url_host(){
+    fn test_url_host() {
         let url = "http://example.com".to_string();
         let expected = Ok(Url {
-            url:url.clone(),
+            url: url.clone(),
             host: "example.com".to_string(),
             port: "80".to_string(),
-            path:"".to_string(),
-            searchpart:"".to_string(),
-        });  
-        assert_eq!(expected,Url::new(url).parse());
+            path: "".to_string(),
+            searchpart: "".to_string(),
+        });
+        assert_eq!(expected, Url::new(url).parse());
+    }
+
+    #[test]
+    fn test_url_host_port() {
+        let url = "http://example.com:8000".to_string();
+        let expected: Result<Url, String> = Ok(Url {
+            url: url.clone(),
+            host: "example.com".to_string(),
+            port: "8000".to_string(),
+            path: "".to_string(),
+            searchpart: "".to_string(),
+        });
+        assert_eq!(expected, Url::new(url).parse())
+    }
+
+    #[test]
+    fn test_url_port_path() {
+        let url = "http://example.com:8000/index.html".to_string();
+        let expected: Result<Url, String> = Ok(Url {
+            url: url.clone(),
+            host: "example.com".to_string(),
+            port: "8000".to_string(),
+            path: "index.html".to_string(),
+            searchpart: "".to_string(),
+        });
+        assert_eq!(expected, Url::new(url).parse())
+    }
+
+    #[test]
+    fn test_url_host_path() {
+        let url = "http://example.com/index.html".to_string();
+        let expected: Result<Url, String> = Ok(Url {
+            url: url.clone(),
+            host: "example.com".to_string(),
+            port: "80".to_string(),
+            path: "index.html".to_string(),
+            searchpart: "".to_string(),
+        });
+        assert_eq!(expected, Url::new(url).parse())
+    }
+
+    #[test]
+    fn test_url_host_port_path_searchquery() {
+        let url = "http://example.com:8000/index.html?foo=123&bar=baz".to_string();
+        let expected: Result<Url, String> = Ok(Url {
+            url: url.clone(),
+            host: "example.com".to_string(),
+            port: "8000".to_string(),
+            path: "index.html".to_string(),
+            searchpart: "foo=123&bar=baz".to_string(),
+        });
+        assert_eq!(expected, Url::new(url).parse())
+    }
+
+    #[test]
+    fn test_no_scheme() {
+        let url = "example.com".to_string();
+        let expected = Err("Only http scheme allowed.".to_string());
+        assert_eq!(expected, Url::new(url).parse());
+    }
+
+    #[test]
+    fn test_unsupported_scheme(){
+        let url = "https://example.com:8000/index.html".to_string();
+        let expected = Err("Only http scheme allowed.".to_string());
+        assert_eq!(expected, Url::new(url).parse())
     }
 }
