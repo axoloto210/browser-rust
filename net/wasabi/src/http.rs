@@ -1,8 +1,12 @@
 extern crate alloc;
 use alloc::string::String;
+use alloc::format;
+use alloc::string::ToString;
 use browser_rust_core::error::Error;
 use browser_rust_core::http::HttpResponse;
 use noli::net::{lookup_host, TcpStream};
+use alloc::vec::Vec;
+use noli::net::SocketAddr;
 
 pub struct HttpClient {}
 

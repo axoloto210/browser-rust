@@ -1,12 +1,13 @@
-use alloc::fmt::format;
+use crate::error::Error;
 use alloc::format;
-use alloc::string::{String, ToString};
+use alloc::string::String;
+use alloc::string::ToString;
 use alloc::vec::Vec;
 
 #[derive(Debug, Clone)]
 pub struct HttpResponse {
     version: String,
-    stasu_code: u32,
+    status_code: u32,
     reason: String,
     headers: Vec<Header>,
     body: String,
@@ -14,19 +15,19 @@ pub struct HttpResponse {
 
 impl HttpResponse {
     pub fn new(raw_response: String) -> Result<Self, Error> {
-        let preprocessed_response = raw_response.trim_start().replaace("\n\r", "\n");
+        let preprocessed_response = raw_response.trim_start().replace("\n\r", "\n");
 
         let (status_line, remaining) = match preprocessed_response.split_once("\n") {
             Some((s, r)) => (s, r),
             None => {
-                return Err(Error::Network(
+                return Err(Error::Network(format!(
                     "invalid http response: {}",
                     preprocessed_response,
-                ));
+                )));
             }
         };
 
-        let (headers, body) = match remaining_split.once("\n\n") {
+        let (headers, body) = match remaining.split_once("\n\n") {
             Some((h, b)) => {
                 let mut headers = Vec::new();
                 for header in h.split('\n') {
@@ -45,7 +46,7 @@ impl HttpResponse {
 
         Ok(Self {
             version: statuses[0].to_string(),
-            stasu_code: statuses[1].parse().unwrap_or(404),
+            status_code: statuses[1].parse().unwrap_or(404),
             reason: statuses[2].to_string(),
             headers,
             body: body.to_string(),
@@ -55,8 +56,8 @@ impl HttpResponse {
     pub fn version(&self) -> String {
         self.version.clone()
     }
-    pub fn stasu_code(&self) -> u32 {
-        self.stasu_code.clone()
+    pub fn status_code(&self) -> u32 {
+        self.status_code.clone()
     }
     pub fn reason(&self) -> String {
         self.reason.clone()
@@ -78,6 +79,7 @@ impl HttpResponse {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Header {
     name: String,
     value: String,
@@ -86,5 +88,18 @@ pub struct Header {
 impl Header {
     pub fn new(name: String, value: String) -> Self {
         Self { name, value }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_status_line_only() {
+        let raw = "HTTP/1.1 200 OK\n\n".to_string();
+        let res = HttpResponse::new(raw).expect("failed to parse http response");
+        assert_eq!(res.version(), "HTTP/1.1");
+        assert_eq!(res.status_code(), 200);
+        assert_eq!(res.reason(), "OK");
     }
 }

@@ -3,13 +3,14 @@ workspace = { members = ["browser-rust-core", "net/wasabi"] }
 name = "browser-rust"
 version = "0.1.0"
 edition = "2021"
+default-run = "browser-rust"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 
 [features]
 default = ["wasabi"]
-wasabi = ["dep:net_wasabi", "dep:noli:]
+wasabi = ["dep:net_wasabi", "dep:noli"]
 
 [[bin]]
 name = "browser-rust"
