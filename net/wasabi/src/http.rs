@@ -1,12 +1,12 @@
 extern crate alloc;
-use alloc::string::String;
 use alloc::format;
+use alloc::string::String;
 use alloc::string::ToString;
+use alloc::vec::Vec;
 use browser_rust_core::error::Error;
 use browser_rust_core::http::HttpResponse;
-use noli::net::{lookup_host, TcpStream};
-use alloc::vec::Vec;
 use noli::net::SocketAddr;
+use noli::net::{lookup_host, TcpStream};
 
 pub struct HttpClient {}
 
@@ -30,7 +30,7 @@ impl HttpClient {
             return Err(Error::Network("Failed to find IP addresses".to_string()));
         }
 
-        let socker_addr: SocketAddr = (ips[0], port).into();
+        let socket_addr: SocketAddr = (ips[0], port).into();
 
         let mut stream = match TcpStream::connect(socket_addr) {
             Ok(stream) => stream,
@@ -47,40 +47,40 @@ impl HttpClient {
 
         request.push_str("Host: ");
         request.push_str(&host);
-        request.push("\n");
+        request.push('\n');
         request.push_str("Accept: text/html\n");
         request.push_str("Connection: close\n");
-        request.push("\n");
+        request.push('\n');
 
-        let _bytes_written = match stream.write(request.as_bytes()){
+        let _bytes_written = match stream.write(request.as_bytes()) {
             Ok(bytes) => bytes,
             Err(_) => {
                 return Err(Error::Network(
                     "Failed to send a request to TCP stream".to_string(),
                 ))
             }
-
         };
 
-        let mut recieved = Vec::new();
+        let mut received = Vec::new();
         loop {
             let mut buf = [0u8; 4096];
-            let bytes_read = match stream.read(&mut buf){
+            let bytes_read = match stream.read(&mut buf) {
                 Ok(bytes) => bytes,
-                Err(_)=>{
+                Err(_) => {
                     return Err(Error::Network(
-                        "Failed to recieve a request from TCP stream".to_string(),                    ))
+                        "Failed to receive a request from TCP stream".to_string(),
+                    ))
                 }
             };
             if bytes_read == 0 {
                 break;
             }
-            recieved.extend_from_slice(&buf[..bytes_read]);
+            received.extend_from_slice(&buf[..bytes_read]);
+        }
 
-            match core::str::from_utf8(&recieved) {
-                Ok(response) => HttpResponse::new(response.to_string()),
-                Err(e)=>Err(Error::Network(format!("Invalid received response {}", e)))
-            }
+        match core::str::from_utf8(&received) {
+            Ok(response) => HttpResponse::new(response.to_string()),
+            Err(e) => Err(Error::Network(format!("Invalid received response {}", e))),
         }
     }
 }
